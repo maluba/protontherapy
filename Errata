@@ -1,0 +1,241 @@
+
+//Errata
+
+G4bool phantomSD::ProcessHits(G4Step* aStep, 
+                                     G4TouchableHistory*)
+{  
+//_________________________________________________________________________________________________________________
+//  if (aStep -> GetPreStepPoint() -> GetPhysicalVolume() -> GetName() != "PhantomSliceHitsCollection") return false;
+//  const G4VTouchable* touchable = aStep->GetPreStepPoint()->GetTouchable();
+  G4StepPoint* preStep = aStep->GetPreStepPoint();
+  G4TouchableHistory* touchable = (G4TouchableHistory*)(preStep->GetTouchable());
+
+//    // Get kinetic energy
+    G4Track * theTrack = aStep  ->  GetTrack();
+    G4double kineticEnergy =  theTrack -> GetKineticEnergy()/MeV;  
+
+    G4ParticleDefinition *particleDef = theTrack -> GetDefinition();
+//    //Get particle name  
+    G4String particleName =  particleDef -> GetParticleName();  
+
+    G4int pdg = particleDef ->GetPDGEncoding();
+
+    // Get unique track_id (in an event)
+    G4int trackID = theTrack -> GetTrackID();
+
+    // Energy Deposited
+    G4double edep  = aStep -> GetTotalEnergyDeposit()/MeV;  //energyDeposit
+
+    G4double stepLength  = aStep -> GetStepLength()/cm;  //DX
+
+//    G4int Z = particleDef-> GetAtomicNumber();
+//    G4int A = particleDef-> GetAtomicMass();
+//  
+    if ( edep==0. && stepLength == 0. ) return false;
+  
+    G4int pcharge = particleDef->GetPDGCharge();  //aStep->GetTrack()->GetDefinition()
+    G4ThreeVector position = theTrack->GetPosition()/cm; //aStep->GetTrack()
+    G4ThreeVector momentum = aStep->GetTrack()->GetMomentum()/MeV;
+    G4String particleType = particleDef->GetParticleType();
+    
+
+  //---------------------separting particles------------------------------------
+//  G4double PrmprotEdep, PrmTrkl, PrmprotKE, SecprotEdep, SecPartTrkl, SecprotKE, OtherpartEdep, OtherpartTrkl, OtherpartKE;
+
+////  G4ParticleDefinition* parDef = 0;
+//  if(particleName == "proton")
+//  {
+//    if ( aStep->GetTrack()->GetParentID() == 0 ) //applicable only to prim.
+//    {
+//      PrmprotEdep = aStep->GetTotalEnergyDeposit()/MeV;
+//      PrmprotKE = theTrack -> GetKineticEnergy()/MeV;
+//      PrmTrkl = stepLength;
+//    }
+//    else if( aStep->GetTrack()->GetParentID() != 0 ) // This is true only for sec.
+//    {
+//      SecprotEdep = aStep->GetTotalEnergyDeposit()/MeV;
+//      SecprotKE = theTrack -> GetKineticEnergy()/MeV;
+//      SecPartTrkl = stepLength;
+//    }
+////    if(PrmprotEdep == SecprotEdep)
+////    {
+////      SecprotEdep += edep;
+////    }
+//  }
+//  else if(particleName != "proton")
+//  {
+//    OtherpartEdep = aStep->GetTotalEnergyDeposit()/MeV;
+//    OtherpartTrkl = aStep -> GetStepLength()/cm; //stepLength;
+//    OtherpartKE = theTrack -> GetKineticEnergy()/MeV;
+//  }
+  
+//------------------------Secondaries-------------------------------------------
+
+//          phantomHit* newHit = new phantomHit();
+//          newHit->SetStripNo(  touchable->GetReplicaNumber(0) );
+//          newHit->SetPos( aStep->GetPreStepPoint()->GetPosition() );
+//          newHit->SetMomentum( aStep->GetPreStepPoint()->GetMomentum() );
+//          newHit->SetEdep( aStep->GetPreStepPoint()->GetTotalEnergy() );
+//          newHit->SetTrackLength( aStep->GetStepLength() );                                    //GetStepLength() );
+//          newHit->SetParticle( aStep->GetTrack()->GetDefinition() );
+//          fHitsCollection->insert( newHit );
+
+//_________________________________________________________________________________________________________________
+
+
+//   Get slice id 
+  G4int sliceNumberZ = touchable->GetCopyNumber(0);
+//  G4int NbofCyls = touchable->GetCopyNumber(1);
+  
+//   Get hit accounting data for this cell
+  phantomHit* hitZ = (*fHitsCollection)[sliceNumberZ];
+  
+//  phantomHit* hitZ1 = (*fHitsCollection)[sliceNumberZ];
+//  phantomHit* hitZ2 = (*fHitsCollection)[sliceNumberZ];
+//  phantomHit* hitZ3 = (*fHitsCollection)[sliceNumberZ];
+
+//  phantomHit* hitR = (*fHitsCollection)[NbofCyls];
+
+  if ( !hitZ) {
+    G4ExceptionDescription msg;
+    msg << "Cannot access hit " << sliceNumberZ; 
+    G4Exception("phantomSD::ProcessHits()",
+      "MyCode0004", FatalException, msg);
+  }         
+//  hitZ->Print();
+   
+
+//   Add values
+  hitZ->Add(edep, stepLength);
+
+//  hitZ1->Add(PrmprotEdep, PrmTrkl);
+//  hitZ2->Add(SecprotEdep, SecPartTrkl);
+//  hitZ3->Add(OtherpartEdep, OtherpartTrkl);
+   
+   
+//  #ifdef G4ANALYSIS_USE_ROOT
+//  #endif
+
+//----------------------write to the --------------------------------------------------------
+////  G4int nofHits = fHitsCollection->entries();
+//  std::ofstream myfile ("pdata.txt");
+//  if (myfile.is_open())
+//  {
+//   myfile << "Writing this to a file.\n"<< G4endl;
+//   
+////    while (j<sizeof(hit[0]))
+//   for (G4int j=0; j<sizeof(hit[0]); j++)
+//   {
+//    myfile <<"\nstripNo=\t" <<sliceNumberZ << G4endl;
+//    myfile <<"TrackID=\t" << theTrack << G4endl;
+//    myfile <<"PGD=\t"<< pdg << G4endl;
+//    myfile <<"Particle Name=\t"<< particleName << G4endl;
+//    myfile <<"Position=\t"<<position/cm<<"\tcm"<<G4endl;
+//    myfile <<"Total energy=\t" << edep/MeV<<"\tKeV" << G4endl;
+//    myfile <<"Kinetic Energy=\t" << kineticEnergy << G4endl;
+//    myfile <<"Momentum=\t"<< momentum/MeV<< "\tKeV"<<G4endl;
+////    hit[j]++;
+//   }
+//   myfile.close();
+//  }
+//  else G4cout <<"Unable to open file"<<G4endl;
+
+//      G4cout <<"\nstripNo=\t" <<sliceNumberZ << G4endl;
+//      G4cout <<"PCharge=\t"<< pcharge << G4endl;
+//      G4cout <<"TrackID=\t"<< trackID << G4endl;
+//      G4cout <<"PGD\t"<<pdg<<G4endl;
+//      G4cout <<"Particle Name=\t"<< particleName << G4endl;
+//      G4cout <<"ParticleType\t"<<particleType<<G4endl;
+//      G4cout <<"Position=\t"<<position/cm<<"\tcm"<<G4endl;
+//      G4cout <<"Total energy=\t" << edep/MeV<<"\tKeV" << G4endl;
+//      G4cout <<"KineticEnergy\t"<<kineticEnergy/MeV<<"\tKeV"<<G4endl;
+//      G4cout <<"Momentum=\t"<< momentum/MeV<< "\tKeV"<<G4endl;
+//      G4cout <<"PrimaryProtonEdep\t"<<PrmprotEdep<<"\tKeV"<<G4endl;
+//      G4cout <<"SecondaryProtonEdep\t"<<SecprotEdep<<"\tKeV"<<G4endl;
+//      G4cout <<"OtherParticleEdep\t"<<OtherpartEdep<<"\tKeV"<<G4endl;
+////      G4cout <<"Pardef\t"<<parDef<<G4endl;
+////      G4cout << "AtomicNumber\t"<< Z <<G4endl;
+////      G4cout << "AtomicMass\t"<< A <<G4endl;
+  return true;
+}
+
+//      // Ensure counting incoming tracks only.
+//      if ( preStep->GetStepStatus() == fGeomBoundary )
+//      {
+//          G4int sliceNumberZ = touchable->GetCopyNumber(0);
+//          phantomHit* hitZ1 = (*fHitsCollection)[sliceNumberZ];
+//          phantomHit* PrimprotHit = new phantomHit();
+//          PrimprotHit->SetStripNo(  touchable->GetReplicaNumber(0) );
+//          PrimprotHit->SetPos( aStep->GetPreStepPoint()->GetPosition() );
+//          PrimprotHit->SetMomentum( aStep->GetPreStepPoint()->GetMomentum() );
+//          PrimprotHit->SetEdep( aStep->GetPreStepPoint()->GetTotalEnergy() );
+//          PrimprotHit->SetTrackLength( aStep->GetStepLength() );//->GetTrackLength() );
+//          PrimprotHit->SetParticle( aStep->GetTrack()->GetDefinition() );
+//          fHitsCollection->insert( PrimprotHit );
+////      PrimprotHit -> Add(,)
+//      }
+
+//
+
+//  // energy deposit
+//  G4double edep = aStep->GetTotalEnergyDeposit()/MeV;
+//  
+//  // step length
+//  G4double stepLength = 0.;
+//  if ( aStep->GetTrack()->GetDefinition()->GetPDGCharge() != 0. ) {
+//    stepLength = aStep->GetStepLength();
+//  }
+
+//  if ( edep == 0. && stepLength == 0. ) return false;      
+
+//  G4TouchableHistory* touchable
+//    = (G4TouchableHistory*)(aStep->GetPreStepPoint()->GetTouchable());
+  
+//  G4cout <<"Energy\t"<<edep<<G4endl;
+//  G4cout <<"Steplength\t"<<stepLength<<G4endl;
+
+////------------------------------------------------------------------------------
+   
+
+//  phantomHit* newHit = new phantomHit();
+
+//  newHit->SetTrackID  (aStep->GetTrack()->GetTrackID());
+//  newHit->SetStripNo(aStep->GetPreStepPoint()->GetTouchableHandle()
+//                                               ->GetCopyNumber());
+//  
+//  newHit->SetEdep(edep);
+//  newHit->SetPos (aStep->GetPostStepPoint()->GetPosition());
+//  newHit->SetTrackLength(aStep->GetStepLength());
+
+//  fHitsCollection->insert( newHit );
+//  
+////  newHit->Add(edep, stepLength);
+
+////  newHit->Print();
+
+
+///////////Attempting to do the separation of particles by calling methods in the  HEventAction
+//  // categorizing particles
+//    G4String pname = (*sliceZHC)[i]->GetParticle()->GetParticleName(); 
+//    G4cout <<"particlenames\t" << pname << G4endl;
+//    if((*sliceZHC)[i]->GetParticle()->GetParticleName() == "proton")
+//    {
+//      if((*sliceZHC)[i]->GetTrackID() == 0)
+//      {
+//        analysisManager->FillH1(1, (2*i+1)*ZHalfLength, (*sliceZHC)[i]->GetEdep()/MeV);
+//      }
+//      else if((*sliceZHC)[i]->GetTrackID() != 0)
+//      {
+//       analysisManager->FillH1(2, (2*i+1)*ZHalfLength, (*sliceZHC)[i]->GetEdep()/MeV);
+//      }
+//    }
+//    else if((*sliceZHC)[i]->GetParticle()->GetParticleName() != "proton")
+//    {
+//      analysisManager->FillH1(3, (2*i+1)*ZHalfLength, (*sliceZHC)[i]->GetEdep()/MeV);
+//    }
+
+//Filing the Histograms, in the HEventAction
+//    analysisManager->FillH1(1, (2*i+1)*SliceThicknessZ, (*sliceZHC)[i]->GetEdep()/MeV);
+//    G4cout << "--filling bin: " << (2*i + 1)*ZHalfLength << ", with energy: " << (*sliceZHC)[i]->GetEdep()/MeV << G4endl;
+//    analysisManager->FillH1(2, (2*i + 1)*ZHalfLength, (*sliceZHC)[i]->GetTrackLength()/cm);
+//    analysisManager->FillH1(3, (2*i+1)*ZHalfLength, sliceZHit->GetStripNo());
