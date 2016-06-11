@@ -53,12 +53,12 @@ HPrimaryGeneratorAction::HPrimaryGeneratorAction()
 
   // default particle kinematic
 
-  G4ParticleDefinition* particleDefinition 
+  G4ParticleDefinition* particleDefinition
     = G4ParticleTable::GetParticleTable()->FindParticle("proton");
 
   fParticleGun->SetParticleDefinition(particleDefinition);
   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
-  fParticleGun->SetParticleEnergy(110.0*MeV);
+  fParticleGun->SetParticleEnergy(50.0*MeV);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -73,7 +73,7 @@ HPrimaryGeneratorAction::~HPrimaryGeneratorAction()
 void HPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
   // This function is called at the begining of event
-  
+
   // Set gun position
   fParticleGun
     ->SetParticlePosition(G4ThreeVector(0., 0., -0.5));

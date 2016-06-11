@@ -24,7 +24,7 @@
 // ********************************************************************
 //
 // $Id: B4DetectorConstruction.cc 77601 2013-11-26 17:08:44Z gcosmo $
-// 
+//
 /// \file B4DetectorConstruction.cc
 /// \brief Implementation of the B4DetectorConstruction class
 
@@ -65,8 +65,8 @@ HDetectorConstruction::HDetectorConstruction()
    fCheckOverlaps(true)
 
 {
-  fNbofRings = 10;//400;
-  fNofSlices = 10;//300 
+  fNbofRings = 30;//400;
+  fNofSlices = 30;//300
   fRingLV = new G4LogicalVolume*[fNbofRings];
 //  fSliceLV = new G4LogicalVolume*[fNofSlices]; //an array holding slices along the Z-axis
 }
@@ -83,9 +83,9 @@ HDetectorConstruction::~HDetectorConstruction()
 
 G4VPhysicalVolume* HDetectorConstruction::Construct()
 {
-  // Define materials 
+  // Define materials
   DefineMaterials();
-  
+
   // Define volumes
   return DefineVolumes();
 }
@@ -93,7 +93,7 @@ G4VPhysicalVolume* HDetectorConstruction::Construct()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void HDetectorConstruction::DefineMaterials()
-{ 
+{
   // material defined using NIST Manager
   G4NistManager* nistManager = G4NistManager::Instance();
   nistManager->FindOrBuildMaterial("G4_WATER");
@@ -111,26 +111,26 @@ G4VPhysicalVolume* HDetectorConstruction::DefineVolumes()
   G4double worldX = 2. *m;
   G4double worldY = 2. *m;
   G4double worldZ = 2. *m;
-  
-  
-  G4double SliceThicknessZ = 1.*cm;//1. *mm; // deltaz
-  
-  
+
+
+  G4double SliceThicknessZ = 1.*mm;//1. *mm; // deltaz
+
+
   // Get materials
   G4Material* worldMaterial = G4Material::GetMaterial("G4_AIR");
   G4Material* phantomMaterial = G4Material::GetMaterial("G4_WATER");
-  
+
   if ( ! worldMaterial || ! phantomMaterial) {
     G4ExceptionDescription msg;
-    msg << "Cannot retrieve materials already defined."; 
+    msg << "Cannot retrieve materials already defined.";
     G4Exception("HDetectorConstruction::DefineVolumes()",
       "MyCode0001", FatalException, msg);
-  }  
-   
-  //     
+  }
+
+  //
   // World
   //
-  G4VSolid* world 
+  G4VSolid* world
     = new G4Box("World",           // its name
                  worldX/2, worldY/2, worldZ/2); // its size
 
@@ -138,57 +138,64 @@ G4VPhysicalVolume* HDetectorConstruction::DefineVolumes()
     = new G4LogicalVolume(world,           // its solid
                           worldMaterial,  // its material
                           "World");         // its name
-                                   
+
   G4VPhysicalVolume* worldPV
     = new G4PVPlacement(0,                // no rotation
                         G4ThreeVector(),  // at (0,0,0)
-                        worldLV,          // its logical volume                         
+                        worldLV,          // its logical volume
                         "World",          // its name
                         0,                // its mother  volume
                         false,            // no boolean operation
                         0,                // copy number
-                        fCheckOverlaps);  // checking overlaps 
-            
+                        fCheckOverlaps);  // checking overlaps
 
-  //                                        
+
+  //
   // Visualization attributes
   //
-  worldLV->SetVisAttributes (G4VisAttributes::Invisible);
+  worldLV->SetVisAttributes(G4VisAttributes::Invisible);
 
   G4VisAttributes* simpleBoxVisAtt= new G4VisAttributes(G4Colour(1.0,1.0,1.0));
   simpleBoxVisAtt->SetVisibility(true);
 //  fTrackerCylinderLV[copyNo]->SetVisAttributes(simpleBoxVisAtt);
   G4VisAttributes* TrackerCylVisAtt = new G4VisAttributes(G4Colour(1.0,1.0,0.0));
   TrackerCylVisAtt->SetVisibility(true);
-  
+
   //oooOO0OOooo.....oooOO0OOooo..Evan's Geometry, Alex's finish..oooOO0OOooo.....oooOO0OOooo
 
   G4ThreeVector FirstCylposition = G4ThreeVector(0,0,0);
 //  G4double Radii[]  {10.*mm,7.*mm,5.*mm,3.*mm,1.*mm,10.*mm}; //varying radii of the rings
 
-  G4double rmax = 0;          //r_0;
+  G4double rmin, rmax = 0;          //r_0;
 
-  G4double rmin = 0;
- 
   for(G4int copyNo=0; copyNo<fNbofRings; copyNo++)
   {
     rmin = rmax;
-    rmax = rmax + 0.5 * cm; //Radii[copyNo];
-  
-    G4VSolid*Rings = new G4Tubs("Ring_solid", rmin,rmax, SliceThicknessZ/2,0.*deg,360.*deg);
-    
+    //rmax = rmax + 0.5 * mm; //Radii[copyNo];
+    //making the last ring much bigger than the rest-------------
+    if(rmin<fNbofRings*0.5-0.5)
+    {
+        rmax = rmax + 0.5 * mm; //Radii[copyNo];
+    }
+    else
+        rmax = rmax + 5 * mm;
+    //-----------------------------------------------------------
+
+    G4VSolid* Rings = new G4Tubs("Ring_solid", rmin,rmax, SliceThicknessZ/2,0.*deg,360.*deg);
+
     fRingLV[copyNo] = new G4LogicalVolume(Rings, phantomMaterial,"RingLV", 0,0,0);
-    
+
 //   fRingLV[copyNo]->SetVisAttributes(simpleBoxVisAtt);
 
     //reproducing cylinders along the z-axis
-    
+
     for(G4int CopyNo=0; CopyNo<fNofSlices; CopyNo++)
     {
         G4double FirstZposition = 0;
         G4double Zposition = FirstZposition + CopyNo * SliceThicknessZ;
         new G4PVPlacement(0, G4ThreeVector(0, 0, Zposition), fRingLV[copyNo], "RingPhys", worldLV, false,CopyNo/*, fCheckOverlaps*/);
     }
+
   }
 
   //
@@ -196,10 +203,10 @@ G4VPhysicalVolume* HDetectorConstruction::DefineVolumes()
   //
   G4cout << "\n------------------------------------------------------------"
          << "\n---> The phantom is divided into " << fNbofRings << "\tconcentric rings of width" << SliceThicknessZ
-         << "\n and replicated along the beam-axis (\t" << fNofSlices* SliceThicknessZ <<"\t of the z-axis)" 
+         << "\n and replicated along the beam-axis (\t" << fNofSlices* SliceThicknessZ <<"\t of the z-axis)"
          << "\n------------------------------------------------------------\n";
-  
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......  
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
   // Example of User Limits
   //
   // Below is an example of how to set tracking constraints in a given
@@ -221,7 +228,7 @@ G4VPhysicalVolume* HDetectorConstruction::DefineVolumes()
   ///                                           minEkin));
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-  
+
   //
   // Always return the physical World
   //
@@ -234,7 +241,7 @@ void HDetectorConstruction::ConstructSDandField()
 {
   // G4SDManager::GetSDMpointer()->SetVerboseLevel(1);
 
-  // 
+  //
   // Sensitive detectors
   //---------------------------------Rings------------------------------------
   G4String ringSDname = "/hadrontherapy/phantomSD";
@@ -242,18 +249,18 @@ void HDetectorConstruction::ConstructSDandField()
   SetSensitiveDetector("RingLV",SDname1,true);
 
   //one lv cannot have more than detector object, what if we swap them
-  
-  // 
+
+  //
   // Magnetic field
-  
+
   // Create global magnetic field messenger.
   // Uniform magnetic field is then created automatically if
   // the field value is not zero.
-  
+
   G4ThreeVector fieldValue = G4ThreeVector();
   fMagFieldMessenger = new G4GlobalMagFieldMessenger(fieldValue);
   fMagFieldMessenger->SetVerboseLevel(1);
-  
+
   // Register the field messenger for deleting
   G4AutoDelete::Register(fMagFieldMessenger);
 }

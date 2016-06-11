@@ -1,0 +1,7 @@
+This is a git repo for improved Geant4 proton therapy app (after MSc.)
+
+To be done in this app:
+1). use the voxelized cylindrical complex geometry to tally dose
+2). dose deposited sorted according to pp, sp, & rc (particle groups)
+3). dose by pp that undergo nuclear elastic scattering tallied into sp
+4). produce depth and lateral histograms of dose by each particle category + dose in tuple filesystem 
