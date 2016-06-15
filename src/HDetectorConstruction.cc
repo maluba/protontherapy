@@ -65,8 +65,8 @@ HDetectorConstruction::HDetectorConstruction()
    fCheckOverlaps(true)
 
 {
-  fNbofRings = 30;//400;
-  fNofSlices = 30;//300
+  fNbofRings = 400;
+  fNofSlices = 300;
   fRingLV = new G4LogicalVolume*[fNbofRings];
 //  fSliceLV = new G4LogicalVolume*[fNofSlices]; //an array holding slices along the Z-axis
 }
@@ -178,7 +178,7 @@ G4VPhysicalVolume* HDetectorConstruction::DefineVolumes()
         rmax = rmax + 0.5 * mm; //Radii[copyNo];
     }
     else
-        rmax = rmax + 5 * mm;
+        rmax = rmax + 5.5 * mm;
     //-----------------------------------------------------------
 
     G4VSolid* Rings = new G4Tubs("Ring_solid", rmin,rmax, SliceThicknessZ/2,0.*deg,360.*deg);
